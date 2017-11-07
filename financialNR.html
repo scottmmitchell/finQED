@@ -1,0 +1,1057 @@
+<HTML>
+<HEAD>
+<TITLE>Ox version of Financial Numerical Recipes</TITLE>
+</HEAD>
+<BODY><H2>Ox version of <A HREF="http://finance.bi.no/~bernt/gcc_prog/">Financial Numerical Recipes</A> by Bernt Arne &Oslash;degaard </H2>
+
+<table cellspacing="1" cellpadding="2" border="1" align="center">
+<tr><td>description: <td>port to Ox of the <b>Financial Numerical Recipes</b> C++ code written by Bernt Arne &Oslash;degaard</tr>
+<tr><td>for: <td>Advanced financial calculations.<br>
+It contains the basic and some advanced algorithms for option
+pricing, and some algorithms dealing with term structure modeling
+and pricing of fixed income securities.</tr>
+<tr><td>required header file: <td><A HREF="financialNR.h"><tt>financialNR.h</tt></a></tr>
+<tr><td>namespace: <td>---</tr>
+<tr><td>location: <td><tt>ox/packages/financialNR</tt></tr>
+<tr><td>examples:<td>
+                  <A HREF="#tst_alternative_formulas.ox" ><tt>tst_alternative_formulas.ox </tt></A></tr>
+<tr><td>&nbsp;<td><A HREF="#tst_approximate.ox"          ><tt>tst_approximate.ox          </tt></A></tr>
+<tr><td>&nbsp;<td><A HREF="#tst_binomial.ox"             ><tt>tst_binomial.ox             </tt></A></tr>
+<tr><td>&nbsp;<td><A HREF="#tst_black_scholes.ox"        ><tt>tst_black_scholes.ox        </tt></A></tr>
+<tr><td>&nbsp;<td><A HREF="#tst_bondopt_black_scholes.ox"><tt>tst_bondopt_black_scholes.ox</tt></A></tr>
+<tr><td>&nbsp;<td><A HREF="#tst_bondopt_rend_bart.ox"    ><tt>tst_bondopt_rend_bart.ox    </tt></A></tr>
+<tr><td>&nbsp;<td><A HREF="#tst_bondopt_vasicek.ox"      ><tt>tst_bondopt_vasicek.ox      </tt></A></tr>
+<tr><td>&nbsp;<td><A HREF="#tst_bonds.ox"                ><tt>tst_bonds.ox                </tt></A></tr>
+<tr><td>&nbsp;<td><A HREF="#tst_cash_flow.ox"            ><tt>tst_cash_flow.ox            </tt></A></tr>
+<tr><td>&nbsp;<td><A HREF="#tst_currency.ox"             ><tt>tst_currency.ox             </tt></A></tr>
+<tr><td>&nbsp;<td><A HREF="#tst_exotics.ox"              ><tt>tst_exotics.ox              </tt></A></tr>
+<tr><td>&nbsp;<td><A HREF="#tst_finite_diff.ox"          ><tt>tst_finite_diff.ox          </tt></A></tr>
+<tr><td>&nbsp;<td><A HREF="#tst_futures.ox"              ><tt>tst_futures.ox              </tt></A></tr>
+<tr><td>&nbsp;<td><A HREF="#tst_mv_calc_port.ox"         ><tt>tst_mv_calc_port.ox         </tt></A></tr>
+<tr><td>&nbsp;<td><A HREF="#tst_simulate.ox"             ><tt>tst_simulate.ox             </tt></A></tr>
+<tr><td>&nbsp;<td><A HREF="#tst_simulate_general.ox"     ><tt>tst_simulate_general.ox     </tt></A></tr>
+<tr><td>&nbsp;<td><A HREF="#tst_term_structure.ox"       ><tt>tst_term_structure.ox       </tt></A></tr>
+<tr><td>source: <td><A HREF="http://finance.bi.no/~bernt/gcc_prog/">http://finance.bi.no/~bernt/gcc_prog/</A></tr>
+<tr><td>documentation: <td><A HREF="http://finance.bi.no/~bernt/gcc_prog/algoritms/algoritms/algoritms.html">Financial Numerical Recipes (HTML)</A>&nbsp;&nbsp;<A HREF="http://finance.bi.no/~bernt/gcc_prog/algoritms/algoritms.pdf">Financial Numerical Recipes (pdf)</A></tr>
+<tr><td>licence: <td><a href="http://www.gnu.org/copyleft/gpl.html">GNU Public Licence</a></tr>
+<tr><td>note: <td>not all functions have been vectorized yet</tr>
+<tr><td>current version: <td>1.02 (Dec 2012)</tr>
+<tr><td>changes: <td>recreated oxo file for Ox 7</tr>
+<tr><td>previous version: <td>1.01 (March 2006)</tr>
+<tr><td>changes: <td>recreated oxo file for Ox 4</tr>
+<tr><td>previous version: <td>1.00a (6 March 2003)</tr>
+<tr><td>changes: <td>
+<ul>
+<li>option_price_call_merton_jump_diffusion called
+option_price_call_black_scholes with r and sigma parameter swapped
+(thanks to Licheng Sun for pointing this out).
+</ul>
+</tr>
+</table>
+
+<p><hr><p><h2><a name="tst_alternative_formulas.ox"></a>tst_alternative_formulas.ox</h2>
+<xmp>
+#include <oxstd.h>
+#import <packages/financialNR/financialNR>
+
+test_merton()
+{
+    decl S=100;
+    decl X=100;
+    decl r=0.05;
+    decl sigma=0.2;
+    decl time = 1;
+    decl lambda = 0.01;
+    decl kappa = 0.01;
+    decl delta = 0.01;
+    println(" Merton's jump diffusion,  Call price = ",  
+        option_price_call_merton_jump_diffusion(S,X,r,sigma,time,
+            lambda,kappa,delta));
+}
+main()
+{
+    println("START testing alternative formulas");
+    test_merton();
+    println("DONE testing alternative formulas");
+}
+</xmp>
+Output:
+<xmp>
+START testing alternative formulas
+ Merton's jump diffusion,  Call price = 18.1272
+DONE testing alternative formulas
+</xmp>
+
+<p><hr><p><h2><a name="tst_approximate.ox"></a>tst_approximate.ox</h2>
+<xmp>
+#include <oxstd.h>
+#import <packages/financialNR/financialNR>
+
+tst_quadratic_approximation()
+{
+    println("START testing quadratic approximation ");
+    decl X = 100;
+    decl r = 0.08;
+    decl sigma = 0.20;
+    decl time = 0.25;
+    decl b = -0.04;
+    decl S=100;
+    println(" call ",
+        option_price_american_call_approximated_baw(S,X,r,b,sigma,time));
+    println(" put ", 
+        option_price_american_put_approximated_baw(S,X,r,b,sigma,time));
+    println("DONE test of approximation ");
+}
+tst_geske_johnson()
+{
+    println("TESTING geske johnson american put approximation ");
+    println(" not done ");
+    println("DONE TESTING geske johnson american put approximation ");
+}
+main()
+{
+    tst_quadratic_approximation();
+}
+</xmp>
+Output:
+<xmp>
+START testing quadratic approximation 
+ call 5.71413
+ put 3.06861
+DONE test of approximation 
+</xmp>
+
+<p><hr><p><h2><a name="tst_binomial.ox"></a>tst_binomial.ox</h2>
+<xmp>
+#include <oxstd.h>
+#import <packages/financialNR/financialNR>
+
+test_binomial_pricing()
+{
+    println("START testing Binomial Pricing");
+    decl spot = 100.0;
+    decl exercise = 100.0;
+    decl r = 0.1;
+    decl sigma = 0.25;
+    decl time_to_maturity=1.0;
+    decl steps = 100;
+    println(" european ");
+    println(" call: ", option_price_call_european_binomial(spot,exercise,r,sigma,time_to_maturity,steps) );
+    println(" put: ", option_price_put_european_binomial(spot,exercise,r,sigma,time_to_maturity,steps) );
+    println(" american ");
+    println(" call: ", option_price_call_american_binomial(spot,exercise,r,sigma,time_to_maturity,steps) );
+    println(" put: ", option_price_put_american_binomial(spot,exercise,r,sigma,time_to_maturity,steps) );
+    decl dividend_times = <0.25,0.75>;
+
+    decl dividend_yields = <0.03,0.03>;
+
+    println("Proportional dividends ");
+    println(" american call, dividends=3%, 3%, price= ",
+        option_price_call_american_proportional_dividends_binomial(
+            spot,exercise,r,sigma,time_to_maturity,steps,
+            dividend_times, dividend_yields) );
+    println(" american put, dividends=3%, 3%, price= ",
+        option_price_put_american_proportional_dividends_binomial(
+            spot,exercise,r,sigma,time_to_maturity,steps,
+            dividend_times, dividend_yields) );
+
+    decl dividend_amounts = <2.5,2.5>;
+
+    println("Discrete dividends: " );
+    println(" american call, dividends 2.5 2.5, price= ",
+        option_price_call_american_discrete_dividends_binomial(
+            spot,exercise,r,sigma,time_to_maturity,steps,
+            dividend_times, dividend_amounts) );
+    println(" american put, dividends 2.5 2.5, price= ",
+        option_price_put_american_discrete_dividends_binomial(
+            spot,exercise,r,sigma,time_to_maturity,steps,
+            dividend_times, dividend_amounts) );
+    println("DONE testing binomial pricing ");
+}
+test_binomial_partials()
+{
+    println("START testing binomial partials ");
+    decl S = 100.0;
+    decl X = 100.0;
+    decl r = 0.1; 
+    decl sigma = 0.25;
+    decl time = 1.0;
+    decl no_steps=100;
+    println(" american call delta = ",
+        option_price_delta_american_call_binomial(S,X,r,sigma,time, no_steps) );
+    println(" american put delta = ",
+        option_price_delta_american_put_binomial(S,X,r,sigma,time, no_steps) );
+    decl delta, gamma, theta, vega, rho;
+    option_price_partials_american_call_binomial(S,X,r, sigma, time, no_steps,
+        &delta, &gamma, &theta, &vega, &rho);
+    println("CALL price partials ");
+    println(" Delta = ", delta);
+    println(" gamma = ", gamma);
+    println(" theta = ", theta);
+    println(" vega  = ", vega);
+    println(" rho   = ", rho);
+    option_price_partials_american_put_binomial(S,X,r, sigma, time, no_steps,
+        &delta, &gamma, &theta, &vega, &rho);
+    println("PUT price partials");
+    println(" Delta = ", delta);
+    println(" gamma = ", gamma);
+    println(" theta = ", theta);
+    println(" vega  = ", vega);
+    println(" rho   = ", rho);
+    println("DONE testing binomial partials ");
+}
+main()
+{
+    test_binomial_pricing();
+    test_binomial_partials();
+}
+</xmp>
+Output:
+<xmp>
+START testing Binomial Pricing
+ european 
+ call: 14.9505
+ put: 5.43425
+ american 
+ call: 14.9505
+ put: 6.54691
+Proportional dividends 
+ american call, dividends=3%, 3%, price= 11.4385
+ american put, dividends=3%, 3%, price= 8.37137
+Discrete dividends: 
+ american call, dividends 2.5 2.5, price= 12.0233
+ american put, dividends 2.5 2.5, price= 8.11801
+DONE testing binomial pricing 
+START testing binomial partials 
+ american call delta = 0.699792
+ american put delta = -0.387636
+CALL price partials 
+ Delta = 0.699792
+ gamma = 0.0140407
+ theta = -9.89067
+ vega  = 34.8536
+ rho   = 56.9652
+PUT price partials
+ Delta = -0.387636
+ gamma = 0.0209086
+ theta = -1.99027
+ vega  = 35.3943
+ rho   = -21.5433
+DONE testing binomial partials 
+</xmp>
+
+<p><hr><p><h2><a name="tst_black_scholes.ox"></a>tst_black_scholes.ox</h2>
+<xmp>
+#include <oxstd.h>
+#import <packages/financialNR/financialNR>
+
+test_black_scholes_price()
+{
+    println("START testing Black Scholes price ");
+    decl spot = 58.507;
+    decl exercise = 60;
+    decl r = 0.06; 
+    decl sigma = 0.35;
+    decl time_to_maturity=0.25;
+    println(" call price = ",
+        option_price_call_black_scholes(spot,exercise,r,sigma, time_to_maturity));
+    println(" put price = ",
+        option_price_put_black_scholes(spot,exercise,r,sigma, time_to_maturity));
+    println(" call delta= ",
+        option_price_delta_call_black_scholes(spot,exercise,r,sigma, time_to_maturity));
+    println(" put delta = ",
+        option_price_delta_put_black_scholes(spot,exercise,r,sigma, time_to_maturity));
+
+    decl delta, gamma, theta, vega, rho;
+    option_price_partials_call_black_scholes(
+        spot, exercise, r, sigma, time_to_maturity,
+        &delta, &gamma, &theta, &vega, &rho);
+    println(" call partial derivatives:\n", " delta=", delta, " gamma=", gamma,
+        " theta=", theta, " vega=", vega, " rho=", rho);
+
+    option_price_partials_put_black_scholes(
+        spot, exercise, r, sigma, time_to_maturity,
+        &delta, &gamma, &theta, &vega, &rho);
+    println(" put partial derivatives:\n",  " delta=", delta, " gamma=", gamma,
+        " theta=", theta, " vega=", vega, " rho=", rho);
+
+    println(" call implied volatility (bisection) = ",
+        option_price_implied_volatility_call_black_scholes_bisections(
+            spot, exercise, r, time_to_maturity, 3.80745));
+    println(" call implied volatility (Newton-Raphson) = ",
+        option_price_implied_volatility_call_black_scholes_newton(
+            spot, exercise, r, time_to_maturity, 3.80745));
+    println("DONE testing Black Scholes price ");
+}
+test_black_scholes_price_payout()
+{
+    println("START testing Black Scholes price with payouts ");
+    decl spot = 100.0;
+    decl exercise = 100.0;
+    decl r = 0.1; 
+    decl sigma = 0.25;
+    decl time_to_maturity=1.0;
+    decl b=0.05;
+    println("continous payout 5% ");
+    println(" call price: ",
+        option_price_european_call_payout(spot,exercise,r,b,sigma, time_to_maturity));
+    println(" put price: ",
+        option_price_european_put_payout(spot,exercise,r,b,sigma, time_to_maturity));
+
+    println("discrete dividends, european options");
+    decl dividend_times = 0.5;
+    decl dividend_amounts = 2.0;
+    println(" call price: ",
+        option_price_european_call_dividends(spot,exercise,r,sigma,
+            time_to_maturity, dividend_times, dividend_amounts));
+    println(" put price: ",
+        option_price_european_put_dividends(spot,exercise,r,sigma,
+            time_to_maturity, dividend_times, dividend_amounts));
+
+    println("American call, one dividend, exact solution ");
+    decl D=2;
+    decl time_to_dividend=0.5;
+    println(" call price (D=2): ",
+        option_price_american_call_dividend(spot,exercise,r,sigma,
+            time_to_maturity, D, time_to_dividend));
+    D=10;
+    println(" call price (D=10): ",
+        option_price_american_call_dividend(spot,exercise,r,sigma,
+            time_to_maturity, D, time_to_dividend));
+    println("DONE testing Black Scholes price with payouts ");
+}
+main()
+{
+    test_black_scholes_price();
+    test_black_scholes_price_payout();
+}
+</xmp>
+Output:
+<xmp>
+START testing Black Scholes price 
+ call price = 3.80745
+ put price = 4.40716
+ call delta= 0.511657
+ put delta = -0.488343
+ call partial derivatives:
+ delta=0.511657 gamma=0.0389474 theta=-9.73352 vega=11.6655 rho=6.53202
+ put partial derivatives:
+ delta=-0.488343 gamma=0.0389474 theta=-6.18712 vega=11.6655 rho=-8.24466
+ call implied volatility (bisection) = 0.35
+ call implied volatility (Newton-Raphson) = 0.35
+DONE testing Black Scholes price 
+START testing Black Scholes price with payouts 
+continous payout 5% 
+ call price: 11.7344
+ put price: 7.09516
+discrete dividends, european options
+ call price: 13.6693
+ put price: 6.05553
+American call, one dividend, exact solution 
+ call price (D=2): 13.6693
+ call price (D=10): 10.017
+DONE testing Black Scholes price with payouts 
+</xmp>
+
+<p><hr><p><h2><a name="tst_bondopt_black_scholes.ox"></a>tst_bondopt_black_scholes.ox</h2>
+<xmp>
+#include <oxstd.h>
+#import <packages/financialNR/financialNR>
+
+test_bondopt_black_scholes()
+{
+    println("START testing Black Scholes Bond options ");
+    decl B=100;
+    decl X=100;
+    decl r=0.05;
+    decl sigma=0.1;
+    decl time=1;
+    println(" call ", 
+        bond_option_price_call_zero_black_scholes( B,X,r,sigma,time),
+            " put ", 
+        bond_option_price_put_zero_black_scholes( B,X,r,sigma,time));
+    decl coupon_times = <0.5>;
+    decl coupons = <1>;
+    println(" price adjusting for coupon ");
+    println(" call ", 
+        bond_option_price_call_coupon_bond_black_scholes(
+            B,X,r,sigma,time,coupon_times,coupons),
+            " put ", 
+        bond_option_price_put_coupon_bond_black_scholes(
+            B,X,r,sigma,time,coupon_times,coupons));    
+    println("DONE testing bond options Black Scholes");
+}
+main()
+{
+    test_bondopt_black_scholes();
+}
+</xmp>
+Output:
+<xmp>
+START testing Black Scholes Bond options 
+ call 6.80496 put 1.9279
+ price adjusting for coupon 
+ call 6.13027 put 2.22852
+DONE testing bond options Black Scholes
+</xmp>
+
+<p><hr><p><h2><a name="tst_bondopt_rend_bart.ox"></a>tst_bondopt_rend_bart.ox</h2>
+<xmp>
+#include <oxstd.h>
+#import <packages/financialNR/financialNR>
+
+test_zero_coupon_call()
+{
+    println(" Zero Coupon Call ");
+    decl X=1000;                   // exercise price 
+    decl S=0.15;
+    decl M=0.05;                   // term structure paramters
+    decl interest=0.10;            // current short interest rate
+    decl no_steps=100;
+    decl option_maturity=4;
+    decl bond_maturity=5;
+    decl maturity_payment=1000;
+    X=900;
+    println(" option on zero coupon bond ");
+    decl c =  bond_option_price_call_zero_american_rendleman_bartter(
+       X, option_maturity, S, M, interest, bond_maturity, maturity_payment, no_steps); 
+    println("   c = ", c); 
+}
+main()
+{
+   println("START testing Rendleman and Bartter ");
+   test_zero_coupon_call();
+   println("DONE testing Rendleman and Bartter ");
+}
+</xmp>
+Output:
+<xmp>
+START testing Rendleman and Bartter 
+ Zero Coupon Call 
+ option on zero coupon bond 
+   c = 3.89117
+DONE testing Rendleman and Bartter 
+</xmp>
+
+<p><hr><p><h2><a name="tst_bondopt_vasicek.ox"></a>tst_bondopt_vasicek.ox</h2>
+<xmp>
+#include <oxstd.h>
+#import <packages/financialNR/financialNR>
+
+test_bondopt_vasicek()
+{
+    println("START testing Bond option, Vasicek ");
+    decl a = 0.1;
+    decl b = 0.1;
+    decl sigma = 0.02;
+    decl r = 0.05;
+    println(" discount factor, t=1: ", 
+        term_structure_discount_factor_vasicek(1.0,r,a,b,sigma));
+    decl X=0.9;
+    println(" call option price ",
+        bond_option_price_call_zero_vasicek(X,r,1,5,a,b,sigma));
+    println(" put option price ",
+        bond_option_price_put_zero_vasicek(X,r,1,5,a,b,sigma));
+    println("DONE testing bond options Vasicek");
+}
+main()
+{
+    test_bondopt_vasicek();
+}
+</xmp>
+Output:
+<xmp>
+START testing Bond option, Vasicek 
+ discount factor, t=1: 0.94899
+ call option price 0.000226837
+ put option price 0.205362
+DONE testing bond options Vasicek
+</xmp>
+
+<p><hr><p><h2><a name="tst_bonds.ox"></a>tst_bonds.ox</h2>
+<xmp>
+#include <oxstd.h>
+#import <packages/financialNR/financialNR>
+
+test_bonds()
+{
+    println("START testing bond algoritms ");
+    decl coupon_times = <1,2>; 
+    decl coupon_amounts = <10,10>; 
+    decl principal_times = <2>;
+    decl principal_amounts = <100>; 
+    decl r = 0.1;
+    println(" price = ", 
+        bonds_price_both(coupon_times,coupon_amounts,
+            principal_times,principal_amounts,r));
+    decl cashflow_times = <1,2>;
+    decl cashflows = <10,110>;
+    println(" price, cashflows case = ",
+        bonds_price(cashflow_times, cashflows, r));
+    println(" price, discrete compounding = ", 
+        bonds_price_discrete(cashflow_times, cashflows, r));
+    println(" duration, simple ", 
+        bonds_duration(cashflow_times, cashflows,r));
+    decl price = bonds_price(cashflow_times, cashflows, 0.11);
+    println(" duration, Macaulay ", 
+        bonds_duration_macaulay(cashflow_times, cashflows,price));
+    println(" duration, Modified ", 
+        bonds_duration_modified(cashflow_times, cashflows, price, r));
+    decl y = bonds_yield_to_maturity(cashflow_times, cashflows, price);
+    println(" yield = ", y);
+    println(" convexity = ", 
+        bonds_convexity (cashflow_times, cashflows, y));
+    
+    println("DONE testing bonds ");
+}
+main()
+{
+    test_bonds();
+}
+</xmp>
+Output:
+<xmp>
+START testing bond algoritms 
+ price = 99.1088
+ price, cashflows case = 99.1088
+ price, discrete compounding = 100
+ duration, simple 1.9087
+ duration, Macaulay 1.90787
+ duration, Modified 17.3518
+ yield = 0.11
+ convexity = 362.067
+DONE testing bonds 
+</xmp>
+
+<p><hr><p><h2><a name="tst_cash_flow.ox"></a>tst_cash_flow.ox</h2>
+<xmp>
+#include <oxstd.h>
+#import <packages/financialNR/financialNR>
+
+test_cash_flow()
+{
+    println("START testing cash flow algoritms ");
+    decl times = <1,2>;
+    decl amounts = <-100, 110.51709>;
+    println(" testing PV ");
+    println(" pv 0   ", cash_flow_pv(times,amounts, 0  ));
+    println(" pv 0.1 ", cash_flow_pv(times,amounts, 0.1));
+    println(" discrete compounding ");
+    println(" pv 0   ", cash_flow_pv_discrete(times,amounts, 0  ));
+    println(" pv 0.1 ", cash_flow_pv_discrete(times,amounts, 0.1));
+    println(" testing irr ");
+    amounts = <-100, 134.98588>;
+    println(" irr (should be 0.30) ", cash_flow_irr(times,amounts));
+    amounts = <100, -134.98588>;
+    println(" irr (should be 0.30) ", cash_flow_irr(times,amounts));
+    times ~= 3;
+    amounts ~= 30;
+    println(" irr (should be ?) ", cash_flow_irr(times,amounts));
+
+    println(" testing, is irr unique? ");
+    amounts = <-100, 110, 10>;
+    println(" is irr unique (?) ", cash_flow_unique_irr(times,amounts));
+    amounts = <-100, 110, -10>;
+    println(" irr unique (?) ", cash_flow_unique_irr(times,amounts));
+    amounts = <-10, 20.0001, -10>;
+    println(" irr unique (?) ", cash_flow_unique_irr(times,amounts));
+    println(" irr: ", cash_flow_irr(times,amounts)); 
+    amounts = <-10, 19.999, -10>;
+    println(" irr unique ? (blows) ", cash_flow_unique_irr(times,amounts));
+    println(" irr: ", cash_flow_irr(times,amounts)); 
+    amounts = <10, -21, 10>;
+    println(" irr unique (?) ", cash_flow_unique_irr(times,amounts));
+    println(" irr: ", cash_flow_irr(times,amounts)); 
+    println("DONE testing cash flow algorithms");
+}
+main()
+{
+    test_cash_flow();
+}
+</xmp>
+Output:
+<xmp>
+START testing cash flow algoritms 
+ testing PV 
+ pv 0   10.5171
+ pv 0.1 -1.47991e-006
+ discrete compounding 
+ pv 0   10.5171
+ pv 0.1 0.427347
+ testing irr 
+ irr (should be 0.30) 0.299999
+ irr (should be 0.30) 0.299999
+ irr (should be ?) 0.0670067
+ testing, is irr unique? 
+ is irr unique (?) 1
+ irr unique (?) 1
+ irr unique (?) 1
+ irr: 0.00317383
+ irr unique ? (blows) 0
+ irr: 3.06672e+206
+ irr unique (?) 1
+ irr: 0.314924
+DONE testing cash flow algorithms
+</xmp>
+
+<p><hr><p><h2><a name="tst_currency.ox"></a>tst_currency.ox</h2>
+<xmp>
+#include <oxstd.h>
+#import <packages/financialNR/financialNR>
+
+test_currency()
+{
+    println("START testing option price ");
+    println(" european ");
+    println("  call = ",
+        currency_option_price_call_european(1.0,1.0,0.11,0.08,0.4,1.0));
+    println("  put = ", 
+        currency_option_price_put_european(1.0,1.0,0.11,0.08,0.4,1.0));
+    println(" binomial american ");
+    println("  call = ", 
+        currency_option_price_call_american_binomial(1.0,1.0,0.11,0.08,0.4,1.0,100));
+    println("  put = ", 
+        currency_option_price_put_american_binomial(1.0,1.0,0.11,0.08,0.4,1.0,100));
+    println("DONE testing option price ");
+}
+main()
+{
+    test_currency();
+}
+</xmp>
+Output:
+<xmp>
+START testing option price 
+ european 
+  call = 0.15821
+  put = 0.130928
+ binomial american 
+  call = 0.159168
+  put = 0.293817
+DONE testing option price 
+</xmp>
+
+<p><hr><p><h2><a name="tst_exotics.ox"></a>tst_exotics.ox</h2>
+<xmp>
+#include <oxstd.h>
+#import <packages/financialNR/financialNR>
+
+test_exotics()
+{
+    println("START testing analytical lookback ");
+    decl S=100;
+    decl Smin=S;
+    decl q = 0;
+    decl r = 0.06;
+    decl sigma = 0.346;
+    decl time = 1.0;
+    println(" call ", 
+        exotics_lookback_european_call(S,Smin,r,q,sigma,time));
+    println(" put ", 
+        exotics_lookback_european_put(S,Smin,r,q,sigma,time));
+    println("DONE testing analytical lookback ");
+}
+main()
+{
+    test_exotics();
+}
+</xmp>
+Output:
+<xmp>
+START testing analytical lookback 
+ call 27.0714
+ put 27.0576
+DONE testing analytical lookback 
+</xmp>
+
+<p><hr><p><h2><a name="tst_finite_diff.ox"></a>tst_finite_diff.ox</h2>
+<xmp>
+#include <oxstd.h>
+#import <packages/financialNR/financialNR>
+
+test_finite_differences()
+{
+    println("START testing finite differences");
+    decl S = 50.0;
+    decl X = 50.0;
+    decl r = 0.1; 
+    decl sigma = 0.4;
+    decl time=0.4167;
+    decl no_S_steps=20;
+    decl no_t_steps=11;
+    println(" black scholes call price = ", 
+        option_price_call_black_scholes(S,X,r,sigma,time));
+    println(" explicit FD American call price = ",
+        option_price_call_american_finite_diff_explicit(S,X,r,sigma,time,no_S_steps,no_t_steps) 
+     );
+    println(" implicit FD American call price = ",
+        option_price_call_american_finite_diff_implicit(S,X,r,sigma,time,no_S_steps,no_t_steps));
+    println(" black scholes put price = ",
+        option_price_put_black_scholes(S,X,r,sigma,time));
+    println(" explicit Euro put price = ",
+        option_price_put_european_finite_diff_explicit(S,X,r,sigma,time,no_S_steps,no_t_steps));
+
+    println(" implicit Euro put price = ",
+        option_price_put_european_finite_diff_implicit(S,X,r,sigma,time,no_S_steps,no_t_steps));
+    println(" explicit American put price = ",
+        option_price_put_american_finite_diff_explicit(S,X,r,sigma,time,no_S_steps,no_t_steps));
+    println(" implicit American put price = ",
+        option_price_put_american_finite_diff_implicit(S,X,r,sigma,time,no_S_steps,no_t_steps));
+    println("DONE testing finite differences ");
+}
+main()
+{
+    test_finite_differences();
+}
+</xmp>
+Output:
+<xmp>
+START testing finite differences
+ black scholes call price = 6.11679
+ explicit FD American call price = 6.07151
+ implicit FD American call price = 5.94792
+ black scholes put price = 4.0761
+ explicit Euro put price = 4.03667
+ implicit Euro put price = 3.91756
+ explicit American put price = 4.25085
+ implicit American put price = 4.07236
+DONE testing finite differences 
+</xmp>
+
+<p><hr><p><h2><a name="tst_futures.ox"></a>tst_futures.ox</h2>
+<xmp>
+#include <oxstd.h>
+#import <packages/financialNR/financialNR>
+
+test_futures()
+{
+    println("START testing futures options etc ");
+    decl S=100;
+    decl F=100;
+    decl X=100;
+    decl r =0.1;
+    decl sigma = 0.2;
+    decl time = 1; 
+    println(" futures price ", futures_price(S,r,time));
+    println(" european call price = ", 
+        futures_option_price_call_european_black(F,X,r,sigma,time));
+    println(" european put price = ", 
+        futures_option_price_put_european_black(F,X,r,sigma,time));
+    decl nosteps = 100;
+    println(" call price, binomial american = ", 
+        futures_option_price_call_american_binomial(F,X,r,sigma,time,nosteps));
+    println(" put price, binomial american = ", 
+        futures_option_price_put_american_binomial(F,X,r,sigma,time,nosteps));
+    println("DONE testing futures ");
+}
+main()
+{
+    test_futures();
+}
+</xmp>
+Output:
+<xmp>
+START testing futures options etc 
+ futures price 110.517
+ european call price = 7.20754
+ european put price = 7.20754
+ call price, binomial american = 7.38478
+ put price, binomial american = 7.38478
+DONE testing futures 
+</xmp>
+
+<p><hr><p><h2><a name="tst_mv_calc_port.ox"></a>tst_mv_calc_port.ox</h2>
+<xmp>
+#include <oxstd.h>
+#import <packages/financialNR/financialNR>
+
+test_mv_calc_port()
+{
+    println("START testing Mean variance portfolios ");
+    decl c = 4;
+    decl x = ranu(c,c), e = ranu(c,1);
+    decl V = x'x, r = meanc(e);
+
+    x = mv_calculate_portfolio_given_mean_unconstrained(e, V, r);
+    println("mv_calculate_portfolio_given_mean_unconstrained:", x);
+
+    x = mv_calculate_portfolio_given_mean_no_short_sales(e, V, r);
+    println("mv_calculate_portfolio_given_mean_no_short_sales:", x);
+    
+    x = mv_calculate_portfolio_given_mean_min_max_constraints(
+        e, V, zeros(c,1) + 0.1, ones(c,1) - 0.1, r);
+    println("mv_calculate_portfolio_given_mean_min_max_constraints:", x);
+
+    println("DONE testing Mean variance portfolios");
+}
+main()
+{
+    test_mv_calc_port();
+}
+</xmp>
+Output:
+<xmp>
+START testing Mean variance portfolios 
+mv_calculate_portfolio_given_mean_unconstrained:
+      0.13053
+     -0.49499
+      0.66481
+      0.69965
+mv_calculate_portfolio_given_mean_no_short_sales:
+      0.22784
+      0.00000
+      0.18565
+      0.58651
+mv_calculate_portfolio_given_mean_min_max_constraints:
+      0.24651
+      0.10000
+      0.10000
+      0.55349
+DONE testing Mean variance portfolios
+</xmp>
+
+<p><hr><p><h2><a name="tst_simulate.ox"></a>tst_simulate.ox</h2>
+<xmp>
+#include <oxstd.h>
+#import <packages/financialNR/financialNR>
+
+test_simulate_pricing()
+{ 
+    println("START testing Monte Carlo option pricing");
+    decl S        = 100.0; 
+    decl X        = 100.0;
+    decl r        = 0.1;
+    decl sigma    = 0.25;
+    decl time     = 1.0;
+    decl no_sims  = 50000;
+    println(" call ");
+    println("   black scholes price = ", 
+        option_price_call_black_scholes(S,X,r,sigma,time));
+    println("    simulated = ", 
+        option_price_call_european_simulated(S,X,r,sigma,time,no_sims));
+    println(" put  ");
+    println("   black scholes price = ", 
+        option_price_put_black_scholes(S,X,r,sigma,time));
+    println("    simulated = ", 
+        option_price_put_european_simulated(S,X,r,sigma,time,no_sims));
+    println("DONE testing MC pricing ");
+}
+test_simulate_deltas()
+{
+    println("START testing estimating deltas of simulated prices");
+    decl S        = 100.0; 
+    decl X        = 100.0;
+    decl r        = 0.1;
+    decl sigma    = 0.25;
+    decl time     = 1.0;
+    decl no_sims  = 50000;
+    println(" call: bs= ", 
+        option_price_delta_call_black_scholes(S,X,r,sigma,time), 
+        " sim= ", 
+        option_price_delta_call_european_simulated(S,X,r,sigma,time,no_sims));
+    println(" put: bs= ", 
+        option_price_delta_put_black_scholes(S,X,r,sigma,time), 
+        " sim= ", 
+        option_price_delta_put_european_simulated(S,X,r,sigma,time,no_sims));
+    println("DONE testing estimating deltas");
+}
+main()
+{ 
+  test_simulate_pricing();
+  test_simulate_deltas();
+}
+</xmp>
+Output:
+<xmp>
+START testing Monte Carlo option pricing
+ call 
+   black scholes price = 14.9758
+    simulated = 14.8439
+ put  
+   black scholes price = 5.45953
+    simulated = 5.47465
+DONE testing MC pricing 
+START testing estimating deltas of simulated prices
+ call: bs= 0.700208 sim= 0.698438
+ put: bs= -0.299792 sim= -0.300177
+DONE testing estimating deltas
+</xmp>
+
+<p><hr><p><h2><a name="tst_simulate_general.ox"></a>tst_simulate_general.ox</h2>
+<xmp>
+#include <oxstd.h>
+#import <packages/financialNR/financialNR>
+
+test_simulate_general()
+{
+    println("START testing general simulations ");
+    decl S=100;
+    decl X=100;
+    decl r=0.05;
+    decl time =1;
+    decl sigma=0.2;
+    decl no_sims = 10000;
+    println(" Black Scholes call price ", 
+        option_price_call_black_scholes(S,X,r,sigma,time), 
+        "   to be compared to ");
+    println(" simulated Black Scholes call ", 
+        derivative_price_european_simulated2(S,X,r,sigma,time,
+            payoff_european_call,no_sims)); 
+    println(" Black Scholes put price ", 
+        option_price_put_black_scholes(S,X,r,sigma,time), 
+        "   to be compared to ");
+    println(" simulated Black Scholes put ", 
+        derivative_price_european_simulated2(S,X,r,sigma,time,
+            payoff_european_put,no_sims)); 
+    
+    no_sims = 500;
+    decl no_steps = 300;
+    
+    println(" simulated arithmetic average ", 
+        " S= ",  S, " r= ", r, " price=",
+        derivative_price_european_simulated1(S,r,sigma,time,
+            payoff_arithmetic_average, no_steps,no_sims)); 
+    
+    println(" simulated geometric average ", 
+        derivative_price_european_simulated1(S,r,sigma,time,
+            payoff_geometric_average, no_steps,no_sims)); 
+    
+    println(" simulated geometric average, control variates ", 
+        derivative_price_european_simulated_control_variate(S,r,sigma,time,
+            payoff_geometric_average, no_steps,no_sims)); 
+    println(" simulated max  ", 
+        derivative_price_european_simulated1(S,r,sigma,time,
+            payoff_max, no_steps,no_sims)); 
+    println(" simulated min ", 
+        derivative_price_european_simulated1(S,r,sigma,time,
+            payoff_min,no_steps,no_sims)); 
+    println("DONE testing general simulations ");
+}
+main()
+{
+    test_simulate_general();
+}
+</xmp>
+Output:
+<xmp>
+START testing general simulations 
+ Black Scholes call price 10.4506   to be compared to 
+ simulated Black Scholes call 10.4505
+ Black Scholes put price 5.57353   to be compared to 
+ simulated Black Scholes put 5.66005
+ simulated arithmetic average  S= 100 r= 0.05 price=3.79525
+ simulated geometric average 3.35511
+ simulated geometric average, control variates 4.30325
+ simulated max  13.5721
+ simulated min 15.3162
+DONE testing general simulations 
+</xmp>
+
+<p><hr><p><h2><a name="tst_term_structure.ox"></a>tst_term_structure.ox</h2>
+<xmp>
+#include <oxstd.h>
+#import <packages/financialNR/financialNR>
+
+test_transforms()
+{
+    println(" testing transformations ");
+    decl r=0.1;
+    decl t=1;
+    decl d=0.9;
+    println(" r= ", r, " t = ", t, " gives disc.fact ", 
+        term_structure_discount_factor_from_yield(r,t));
+    println(" d= ", d, " t = ", t, " gives yield ", 
+        term_structure_yield_from_discount_factor(d,t));
+    decl d1=0.8;
+    println(" implied forward rate, d = ", d, " d1= ", d1,
+        " t= ", t, " forward = ",
+        term_structure_forward_rate_from_disc_facts(d,d1,t));
+}
+test_cir()
+{
+    println(" cir dfact (t=1): ",
+        term_structure_discount_factor_cir(1.0,0.1,0.1,0.1,0.1,0.1));
+}
+test_vasicek()
+{
+    println(" vasicek dfact (t=1): ", 
+        term_structure_discount_factor_vasicek(1.0,0.05,-0.1,0.1,0.1));
+}
+test_esti_cir()
+{
+    println(" estimated cir discount_factor (t=1): ", 
+        term_structure_discount_factor_estimated_cir(1.0,0.1,0.1,0.1,1.1));
+}
+test_nelson_siegel()
+{
+    decl t=1.0;
+    println(" ns= ",
+        term_structure_yield_nelson_siegel(t,0.1,0.1,0.1,1.0));
+}
+test_bliss()
+{
+    decl t=1.0;
+    println(" bliss r(t=1) ", 
+        term_structure_yield_bliss(t,0.1,0.1,0.1,1.0,1.0));
+}
+test_spline()
+{
+    decl b=0.1;
+    decl c=0.1;
+    decl d=-0.1;
+    decl f = <0.01,0.01,-0.01>;
+    decl knots = <2,7,12>; 
+    decl t=1.0;
+    println("spline disc fact ",
+        term_structure_discount_factor_cubic_spline(t,b,c,d,f,knots));
+}
+test_interpolated()
+{
+    decl times = <0.1,0.5,1,5,10>;
+    decl yields = <0.1,0.2,0.3,0.4,0.5>;
+    println(" testing interpolated ");
+    println(" t=.1 ", term_structure_yield_linearly_interpolated(0.1,times,yields));
+    println(" t=0.5 ", term_structure_yield_linearly_interpolated(0.5,times,yields));
+    println(" t=1 ", term_structure_yield_linearly_interpolated(1,times,yields));
+    println(" t=3 ", term_structure_yield_linearly_interpolated(3,times,yields));
+    println(" t=5 ", term_structure_yield_linearly_interpolated(5,times,yields)); 
+    println(" t=10 ", term_structure_yield_linearly_interpolated(10,times,yields));
+}
+main() 
+{
+    println("START testing term structure calculations ");
+    test_transforms();
+    test_interpolated();
+    test_spline();
+    test_bliss();
+    test_nelson_siegel();
+    test_vasicek();
+    test_cir();
+    test_esti_cir();
+    println("END testing term structure calculations ");
+}
+</xmp>
+Output:
+<xmp>
+START testing term structure calculations 
+ testing transformations 
+ r= 0.1 t = 1 gives disc.fact 0.904837
+ d= 0.9 t = 1 gives yield 0.105361
+ implied forward rate, d = 0.9 d1= 0.8 t= 1 forward = 0.117783
+ testing interpolated 
+ t=.1 0.1
+ t=0.5 0.2
+ t=1 0.3
+ t=3 0.35
+ t=5 0.4
+ t=10 0.5
+spline disc fact 1.1
+ bliss r(t=1) 0.189636
+ ns= 0.263212
+ vasicek dfact (t=1): 0.955408
+ cir dfact (t=1): 0.909212
+ estimated cir discount_factor (t=1): 0.909225
+END testing term structure calculations 
+</xmp>
+
+</BODY></HTML>
