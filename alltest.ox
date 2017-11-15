@@ -1,20 +1,36 @@
-
+#include "all.ox"
+enum{QUIT=-1,DOALL,CHOICE}
+make_the_call(m,k);
 main() {
-}
-\ox\bin\oxl tst_alternative_formulas.ox	   > tst.out
-\ox\bin\oxl tst_approximate.ox			   >> tst.out
-\ox\bin\oxl tst_binomial.ox				   >> tst.out
-\ox\bin\oxl tst_black_scholes.ox		   >> tst.out
-\ox\bin\oxl tst_bondopt_black_scholes.ox   >> tst.out
-\ox\bin\oxl tst_bondopt_rend_bart.ox	   >> tst.out
-\ox\bin\oxl tst_bondopt_vasicek.ox		   >> tst.out
-\ox\bin\oxl tst_bonds.ox				   >> tst.out
-\ox\bin\oxl tst_cash_flow.ox			   >> tst.out
-\ox\bin\oxl tst_currency.ox				   >> tst.out
-\ox\bin\oxl tst_exotics.ox				   >> tst.out
-\ox\bin\oxl tst_finite_diff.ox			   >> tst.out
-\ox\bin\oxl tst_futures.ox				   >> tst.out
-\ox\bin\oxl tst_mv_calc_port.ox			   >> tst.out
-\ox\bin\oxl tst_simulate.ox				   >> tst.out
-\ox\bin\oxl tst_simulate_general.ox		   >> tst.out
-\ox\bin\oxl tst_term_structure.ox		   >> tst.out
+	decl k, level,done, nx = 1, r,i,menu;
+	format(250);
+    menu = tests;
+    level =0;
+    do {
+	   for (k=0;k<sizeof(menu);++k)
+            println("[","%02u",k,"] ",menu[k][prompt]);
+ 	   scan("[-1]  QUIT\n?","%i",&k);
+	   if (k==QUIT) {
+            if (!level)  exit(0);
+            --level;
+            menu = tests;
+            }
+       else if (k==DOALL) {
+            for(k=0;k<sizeof(menu);++k)
+                if (isfunction(menu[k][call])
+	               make_the_call(menu,k);
+            }
+       else if ( (done = isfunction(menu[k][call]) )) {
+	       make_the_call(menu,k);
+           }
+       else menu = menu[k][call];
+       }
+	 } while (!done);
+    }
+
+make_the_call(m,k) {
+	fopen(m[k][prompt]+".txt","l");
+	println("Output of ",m[k][prompt],sep);
+	m[k][call]();
+    println("... finished.\n");
+    }
