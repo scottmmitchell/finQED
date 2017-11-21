@@ -76,9 +76,10 @@ binomial_partials()
 }
 
 binomial_menu(){
-    return {
-    {"Run All",0},
-	{"Pricing",binomial_pricing},
-	{"Partials",binomial_partials}
-    };
+	decl m = new Menu("binomial",FALSE);
+	m->add(
+		{"Pricing",binomial_pricing},
+		{"Partials",binomial_partials}
+    	);
+	return m;
     }
