@@ -1,4 +1,5 @@
-#include "../../include/finQED.h"
+#include "oxstd.h"
+#include "../../include/bin.h"
 
 option_price_partials_american_put_binomial(
 						 S,  		// spot prices
